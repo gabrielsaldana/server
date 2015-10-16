@@ -228,6 +228,15 @@ class VariantSetCompoundId(DatasetCompoundId):
     containerIds = DatasetCompoundId.containerIds + [('variantSetId', 1)]
 
 
+class VariantSetMetadataCompoundId(VariantSetCompoundId):
+    """
+    The compound id for a variant set
+    """
+    fields = VariantSetCompoundId.fields + ['key']
+    containerIds = VariantSetCompoundId.containerIds + [
+        ('variantSetMetadataId', 1)]
+
+
 class VariantCompoundId(VariantSetCompoundId):
     """
     The compound id for a variant
@@ -390,7 +399,7 @@ class PysamDatamodelMixin(object):
 
     @classmethod
     def assertInt(cls, attr, attrName):
-        if not isinstance(attr, int):
+        if not isinstance(attr, (int, long)):
             message = "invalid {} '{}' not an int".format(attrName, attr)
             raise exceptions.DatamodelValidationException(message)
 

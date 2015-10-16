@@ -16,6 +16,7 @@ import unittest.suite
 import requests
 import json
 
+import ga4gh.backend as backend
 import ga4gh.client as client
 import ga4gh.converters as converters
 import ga4gh.frontend as frontend
@@ -101,8 +102,20 @@ class AbstractQueryRunner(object):
     """
     def __init__(self, args):
         self._key = args.key
-        self._httpClient = client.HttpClient(
-            args.baseUrl, verbosityToLogLevel(args.verbose), self._key)
+        # TODO this is an experimental addition which is useful for
+        # testing. We should think about this and document it if we
+        # this it's a useful feature. There is an argument for pushing
+        # the backend instantiation into the client, and letting the
+        # client be a factory, instantiating the correct Client class
+        # depending on the prefix.
+        filePrefix = "file://"
+        if args.baseUrl.startswith(filePrefix):
+            dataDir = args.baseUrl[len(filePrefix):]
+            theBackend = backend.FileSystemBackend(dataDir)
+            self._client = client.LocalClient(theBackend)
+        else:
+            self._client = client.HttpClient(
+                args.baseUrl, verbosityToLogLevel(args.verbose), self._key)
 
 
 class FormattedOutputRunner(AbstractQueryRunner):
@@ -139,8 +152,6 @@ class AbstractGetRunner(FormattedOutputRunner):
     def __init__(self, args):
         super(AbstractGetRunner, self).__init__(args)
         self._id = args.id
-        self._httpClient = client.HttpClient(
-            args.baseUrl, verbosityToLogLevel(args.verbose), self._key)
 
     def run(self):
         response = self._method(self._id)
@@ -155,20 +166,20 @@ class AbstractSearchRunner(FormattedOutputRunner):
     def __init__(self, args):
         super(AbstractSearchRunner, self).__init__(args)
         self._pageSize = args.pageSize
-        self._httpClient.setPageSize(self._pageSize)
+        self._client.setPageSize(self._pageSize)
 
     def getAllDatasets(self):
         """
         Returns all datasets on the server.
         """
-        return self._httpClient.searchDatasets()
+        return self._client.searchDatasets()
 
     def getAllVariantSets(self):
         """
         Returns all variant sets on the server.
         """
         for dataset in self.getAllDatasets():
-            iterator = self._httpClient.searchVariantSets(datasetId=dataset.id)
+            iterator = self._client.searchVariantSets(datasetId=dataset.id)
             for variantSet in iterator:
                 yield variantSet
 
@@ -177,16 +188,28 @@ class AbstractSearchRunner(FormattedOutputRunner):
         Returns all readgroup sets on the server.
         """
         for dataset in self.getAllDatasets():
-            iterator = self._httpClient.searchReadGroupSets(
+            iterator = self._client.searchReadGroupSets(
                 datasetId=dataset.id)
             for readGroupSet in iterator:
                 yield readGroupSet
+
+    def getAllReadGroups(self):
+        """
+        Get all read groups in a read group set
+        """
+        for dataset in self.getAllDatasets():
+            iterator = self._client.searchReadGroupSets(
+                datasetId=dataset.id)
+            for readGroupSet in iterator:
+                readGroupSet = self._client.getReadGroupSet(readGroupSet.id)
+                for readGroup in readGroupSet.readGroups:
+                    yield readGroup.id
 
     def getAllReferenceSets(self):
         """
         Returns all reference sets on the server.
         """
-        return self._httpClient.searchReferenceSets()
+        return self._client.searchReferenceSets()
 
 
 # Runners for the various search methods
@@ -199,7 +222,7 @@ class SearchDatasetsRunner(AbstractSearchRunner):
         super(SearchDatasetsRunner, self).__init__(args)
 
     def run(self):
-        iterator = self._httpClient.searchDatasets()
+        iterator = self._client.searchDatasets()
         self._output(iterator)
 
 
@@ -213,7 +236,7 @@ class SearchReferenceSetsRunner(AbstractSearchRunner):
         self._md5checksum = args.md5checksum
 
     def run(self):
-        iterator = self._httpClient.searchReferenceSets(
+        iterator = self._client.searchReferenceSets(
             accession=self._accession, md5checksum=self._md5checksum)
         self._output(iterator)
 
@@ -229,7 +252,7 @@ class SearchReferencesRunner(AbstractSearchRunner):
         self._md5checksum = args.md5checksum
 
     def _run(self, referenceSetId):
-        iterator = self._httpClient.searchReferences(
+        iterator = self._client.searchReferences(
             accession=self._accession, md5checksum=self._md5checksum,
             referenceSetId=referenceSetId)
         self._output(iterator)
@@ -251,7 +274,7 @@ class SearchVariantSetsRunner(AbstractSearchRunner):
         self._datasetId = args.datasetId
 
     def _run(self, datasetId):
-        iterator = self._httpClient.searchVariantSets(datasetId=datasetId)
+        iterator = self._client.searchVariantSets(datasetId=datasetId)
         self._output(iterator)
 
     def run(self):
@@ -272,7 +295,7 @@ class SearchReadGroupSetsRunner(AbstractSearchRunner):
         self._name = args.name
 
     def _run(self, datasetId):
-        iterator = self._httpClient.searchReadGroupSets(
+        iterator = self._client.searchReadGroupSets(
             datasetId=datasetId, name=self._name)
         self._output(iterator)
 
@@ -294,7 +317,7 @@ class SearchCallSetsRunner(AbstractSearchRunner):
         self._name = args.name
 
     def _run(self, variantSetId):
-        iterator = self._httpClient.searchCallSets(
+        iterator = self._client.searchCallSets(
             variantSetId=variantSetId, name=self._name)
         self._output(iterator)
 
@@ -348,7 +371,7 @@ class SearchVariantsRunner(VariantFormatterMixin, AbstractSearchRunner):
             self._callSetIds = args.callSetIds.split(",")
 
     def _run(self, variantSetId):
-        iterator = self._httpClient.searchVariants(
+        iterator = self._client.searchVariants(
             start=self._start, end=self._end,
             referenceName=self._referenceName,
             variantSetId=variantSetId, callSetIds=self._callSetIds)
@@ -375,17 +398,38 @@ class SearchReadsRunner(AbstractSearchRunner):
         if args.readGroupIds is not None:
             self._readGroupIds = args.readGroupIds.split(",")
 
+    def _run(self, referenceGroupId, referenceId=None):
+        """
+        automatically guess reference id if not passed
+        """
+        # check if we can get reference id from rg
+        if referenceId is None:
+            referenceId = self._referenceId
+        if referenceId is None:
+            rg = self._client.getReadGroup(readGroupId=referenceGroupId)
+            iterator = self._client.searchReferences(rg.referenceSetId)
+            for reference in iterator:
+                self._run(referenceGroupId, reference.id)
+        else:
+            iterator = self._client.searchReads(
+                readGroupIds=[referenceGroupId], referenceId=referenceId,
+                start=self._start, end=self._end)
+            self._output(iterator)
+
     def run(self):
-        # TODO add support for looking up ReadGroupSets and References
-        # like we do with SearchVariants and others.
-        iterator = self._httpClient.searchReads(
-            readGroupIds=self._readGroupIds, referenceId=self._referenceId,
-            start=self._start, end=self._end)
-        self._output(iterator)
+        """
+        Iterate passed read group ids, or go through all available read groups
+        """
+        if not self._readGroupIds:
+            for referenceGroupId in self.getAllReadGroups():
+                self._run(referenceGroupId)
+        else:
+            for referenceGroupId in self._readGroupIds:
+                self._run(referenceGroupId)
 
     def _textOutput(self, gaObjects):
         """
-        Prints out the specified Variant objects in a VCF-like form.
+        Prints out the specified Read objects.
         """
         for read in gaObjects:
             # TODO add in some more useful output here.
@@ -412,10 +456,18 @@ class SearchGenotypePhenotypeRunner(AbstractSearchRunner):
         self._evidence = argStore["evidence"]
 
     def run(self):
-        iterator = self._httpClient.searchGenotypePhenotype(
+        iterator = self._client.searchGenotypePhenotype(
             feature=self._feature, phenotype=self._phenotype,
             evidence=self._evidence)
         self._output(iterator)
+
+    def _textOutput(self, gaObjects):
+        """
+        Prints out the specified FeaturePhenotypeAssociation objects.
+        """
+        for association in gaObjects:
+            # TODO add in some more useful output here.
+            print(association.id)
 
 # ListReferenceBases is an oddball, and doesn't fit either get or
 # search patterns.
@@ -432,7 +484,7 @@ class ListReferenceBasesRunner(AbstractQueryRunner):
         self._end = args.end
 
     def run(self):
-        iterator = self._httpClient.listReferenceBases(
+        iterator = self._client.listReferenceBases(
             self._referenceId, self._start, self._end)
         # TODO add support for FASTA output.
         for segment in iterator:
@@ -448,7 +500,7 @@ class GetReferenceSetRunner(AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetReferenceSetRunner, self).__init__(args)
-        self._method = self._httpClient.getReferenceSet
+        self._method = self._client.getReferenceSet
 
 
 class GetReferenceRunner(AbstractGetRunner):
@@ -457,7 +509,7 @@ class GetReferenceRunner(AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetReferenceRunner, self).__init__(args)
-        self._method = self._httpClient.getReference
+        self._method = self._client.getReference
 
 
 class GetReadGroupSetRunner(AbstractGetRunner):
@@ -466,7 +518,7 @@ class GetReadGroupSetRunner(AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetReadGroupSetRunner, self).__init__(args)
-        self._method = self._httpClient.getReadGroupSet
+        self._method = self._client.getReadGroupSet
 
 
 class GetReadGroupRunner(AbstractGetRunner):
@@ -475,7 +527,7 @@ class GetReadGroupRunner(AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetReadGroupRunner, self).__init__(args)
-        self._method = self._httpClient.getReadGroup
+        self._method = self._client.getReadGroup
 
 
 class GetCallsetRunner(AbstractGetRunner):
@@ -484,7 +536,7 @@ class GetCallsetRunner(AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetCallsetRunner, self).__init__(args)
-        self._method = self._httpClient.getCallset
+        self._method = self._client.getCallset
 
 
 class GetDatasetRunner(AbstractGetRunner):
@@ -493,7 +545,7 @@ class GetDatasetRunner(AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetDatasetRunner, self).__init__(args)
-        self._method = self._httpClient.getDataset
+        self._method = self._client.getDataset
 
 
 class GetVariantRunner(VariantFormatterMixin, AbstractGetRunner):
@@ -502,7 +554,7 @@ class GetVariantRunner(VariantFormatterMixin, AbstractGetRunner):
     """
     def __init__(self, args):
         super(GetVariantRunner, self).__init__(args)
-        self._method = self._httpClient.getVariant
+        self._method = self._client.getVariant
 
 
 def addDisableUrllibWarningsArgument(parser):
@@ -529,15 +581,15 @@ def addGenotypePhenotypeSearchOptions(parser):
     """
     parser.add_argument(
         "--feature", "-f", default=None,
-        help="Only return assocaitions to this feature."
+        help="Only return associations to this feature."
     )
     parser.add_argument(
         "--evidence", "-E", default=None,
-        help="Only return assocaitions with this type of evidence."
+        help="Only return associations to this evidence."
     )
     parser.add_argument(
         "--phenotype", "-p", default=None,
-        help="Only return assocaitions to this phenotype."
+        help="Only return associations to this phenotype."
     )
 
 
@@ -892,9 +944,9 @@ def getClientParser():
     return parser
 
 
-def client_main():
+def client_main(args=None):
     parser = getClientParser()
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if "runner" not in args:
         parser.print_help()
     else:
@@ -925,8 +977,8 @@ class Ga2VcfRunner(SearchVariantsRunner):
             self._binaryOutput = True
 
     def run(self):
-        variantSet = self._httpClient.getVariantSet(self._variantSetId)
-        iterator = self._httpClient.searchVariants(
+        variantSet = self._client.getVariantSet(self._variantSetId)
+        iterator = self._client.searchVariants(
             start=self._start, end=self._end,
             referenceName=self._referenceName,
             variantSetId=self._variantSetId,
@@ -994,13 +1046,10 @@ class Ga2SamRunner(SearchReadsRunner):
             self._binaryOutput = True
 
     def run(self):
-        readGroup = self._httpClient.getReadGroup(self._readGroupIds[0])
-        iterator = self._httpClient.searchReads(
-            readGroupIds=self._readGroupIds, referenceId=self._referenceId,
-            start=self._start, end=self._end)
-        # do conversion
         samConverter = converters.SamConverter(
-            readGroup, iterator, self._outputFile, self._binaryOutput)
+            self._client, readGroupId=self._readGroupIds[0],
+            referenceId=self._referenceId, start=self._start, end=self._end,
+            outputFileName=self._outputFile, binaryOutput=self._binaryOutput)
         samConverter.convert()
 
 
