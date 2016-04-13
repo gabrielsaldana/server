@@ -778,9 +778,7 @@
                  "name",
                  "sourceURI",
                  "sourceAccessions",
-                 "isDerived",
-                 "sourceDivergence",
-                 "ncbiTaxonId"
+                 "isDerived"
              ],
              "properties": {
                  "id": {
@@ -806,12 +804,6 @@
                  },
                  "isDerived": {
                      "type": "boolean"
-                 },
-                 "sourceDivergence": {
-                     "type": "number"
-                 },
-                 "ncbiTaxonId": {
-                     "type": "integer"
                  }
              }
          },
@@ -819,11 +811,8 @@
              "type": "object",
              "required": [
                  "id",
-                 "name",
                  "md5checksum",
-                 "ncbiTaxOnId",
                  "description",
-                 "assemblyId",
                  "sourceURI",
                  "sourceAccessions",
                  "isDerived"
@@ -866,7 +855,6 @@
              "required": [
                  "offset",
                  "sequence",
-                 "nextPageToken"
              ],
              "properties": {
                  "offset": {
@@ -888,7 +876,6 @@
                  "features",
                  "evidence",
                  "phenotype",
-                 "description",
                  "environmentalContexts"
              ],
              "properties": {
@@ -994,8 +981,7 @@
          "Evidence": {
              "type": "object",
              "required": [
-                 "evidenceType",
-                 "description"
+                 "evidenceType"
              ],
              "properties": {
                  "evidenceType": {
@@ -1009,11 +995,7 @@
          "PhenotypeInstance": {
              "type": "object",
              "required": [
-                 "id",
-                 "type",
-                 "qualifier",
-                 "ageOfOnset",
-                 "description"
+                 "type"
              ],
              "properties": {
                  "id": {
@@ -1039,9 +1021,7 @@
          "EnvironmentalContext": {
              "type": "object",
              "required": [
-                 "id",
-                 "environmentType",
-                 "description"
+                 "environmentType"
              ],
              "properties": {
                  "id": {
@@ -1059,11 +1039,7 @@
              "type": "object",
              "required": [
                  "id",
-                 "name",
-                 "sampleId",
                  "variantSetIds",
-                 "created",
-                 "updated",
                  "info"
              ],
              "properties": {
@@ -1103,20 +1079,8 @@
              "type": "object",
              "required": [
                  "id",
-                 "name",
-                 "description",
                  "recordCreateTime",
                  "recordUpdatetime",
-                 "runTime",
-                 "molecule",
-                 "strategy",
-                 "selection",
-                 "library",
-                 "libraryLayout",
-                 "instrumentModel",
-                 "instrumentDataFile",
-                 "sequencingCenter",
-                 "platformUnit",
                  "info"
              ],
              "properties": {
@@ -1178,13 +1142,6 @@
          },
          "Program": {
              "type": "object",
-             "required": [
-                 "commandLine",
-                 "id",
-                 "name",
-                 "prevProgramId",
-                 "version"
-             ],
              "properties": {
                  "commandLine": {
                      "type": "string"
@@ -1207,11 +1164,6 @@
              "type": "object",
              "required": [
                  "variantSetId",
-                 "name",
-                 "pageSize",
-                 "pageToken",
-                 "callSets",
-                 "nextPageToken"
              ],
              "properties": {
                  "variantSetId": {
@@ -1231,8 +1183,7 @@
          "SearchCallSetsResponse": {
              "type": "object",
              "required": [
-                 "callSets",
-                 "nextPageToken"
+                 "callSets"
              ],
              "properties": {
                  "callSets": {
@@ -1249,10 +1200,7 @@
          "SearchReadGroupSetsRequest": {
              "type": "object",
              "required": [
-                 "datasetId",
-                 "name",
-                 "pageSize",
-                 "pageToken"
+                 "datasetId"
              ],
              "properties": {
                  "datasetId": {
@@ -1272,8 +1220,7 @@
          "SearchReadGroupSetsResponse": {
              "type": "object",
              "required": [
-                 "readGroupSets",
-                 "nextPageToken"
+                 "readGroupSets"
              ],
              "properties": {
                  "readGroupSets": {
@@ -1289,11 +1236,6 @@
          },
          "ReadStats": {
              "type": "object",
-             "required": [
-                 "alignedReadCount",
-                 "unalignedReadCount",
-                 "baseCount"
-             ],
              "properties": {
                  "alignedReadCount": {
                      "type": "integer"
@@ -1310,17 +1252,8 @@
              "type": "object",
              "required": [
                  "id",
-                 "datasetId",
-                 "name",
-                 "description",
-                 "sampleId",
-                 "experiment",
-                 "predictedInsertSize",
-                 "created",
-                 "updated",
                  "programs",
-                 "referenceSetId",
-                 "info",
+                 "info"
              ],
              "properties": {
                  "id": {
@@ -1353,7 +1286,7 @@
                  "stats": {
                      "$ref": "#/definitions/ReadStats"
                  },
-                 "program": {
+                 "programs": {
                      "type": "array",
                      "items": {
                          "$ref": "#/definitions/Program"
@@ -1377,10 +1310,7 @@
              "type": "object",
              "required": [
                  "id",
-                 "datasetId",
-                 "name",
-                 "stats",
-                 "readGroups",
+                 "readGroups"
              ],
              "properties": {
                  "id": {
@@ -1451,8 +1381,7 @@
              "type": "object",
              "required": [
                  "operation",
-                 "operationLength",
-                 "referenceSequence"
+                 "operationLength"
              ],
              "properties": {
                  "operation": {
@@ -1470,7 +1399,6 @@
              "type": "object",
              "required": [
                  "position",
-                 "mappingQuality",
                  "cigar"
              ],
              "properties": {
@@ -1491,20 +1419,10 @@
          "ReadAlignment": {
              "type": "object",
              "required": [
-                 "id",
                  "readGroupId",
                  "fragmentName",
-                 "properPlacement",
-                 "duplicateFragment",
-                 "numberReads",
-                 "fragmentLength",
-                 "readNumber",
                  "alignment",
-                 "secondaryAlignment",
-                 "supplementaryAlignment",
-                 "alignedSequence",
                  "alignedQuality",
-                 "nextMatePosition",
                  "info"
              ],
              "properties": {
@@ -1525,6 +1443,9 @@
                  },
                  "numberReads": {
                      "type": "integer"
+                 },
+                 "failedVendorQualityChecks": {
+                     "type": "boolean"
                  },
                  "fragmentLength": {
                      "type": "integer"
@@ -1567,12 +1488,7 @@
          "SearchReadsRequest": {
              "type": "object",
              "required": [
-                 "readGroupIds",
-                 "referenceId",
-                 "start",
-                 "end",
-                 "pageSize",
-                 "pageToken"
+                 "readGroupIds"
              ],
              "properties": {
                  "readGroupIds": {
@@ -1601,8 +1517,7 @@
          "SearchReadsResponse": {
              "type": "object",
              "required": [
-                 "alignments",
-                 "nextPageToken"
+                 "alignments"
              ],
              "properties": {
                  "alignments": {
@@ -1619,10 +1534,7 @@
          "SearchGenotypePhenotypeRequest": {
              "type": "object",
              "required": [
-                 "phenotypeAssociationSetId",
-                 "feature",
-                 "phenotype",
-                 "evidence"
+                 "phenotypeAssociationSetId"
              ],
              "properties": {
                  "phenotypeAssociationSetId": {
@@ -1642,8 +1554,7 @@
          "SearchGenotypePhenotypeResponse": {
              "type": "object",
              "required": [
-                 "associations",
-                 "nextPageToken"
+                 "associations"
              ],
              "properties": {
                  "associations": {
@@ -1660,11 +1571,7 @@
          "SearchReferencesRequest": {
              "type": "object",
              "required": [
-                 "referenceSetId",
-                 "md5checksum",
-                 "accession",
-                 "pageSize",
-                 "pageToken"
+                 "referenceSetId"
              ],
              "properties": {
                  "referenceSetId": {
@@ -1687,11 +1594,10 @@
          "SearchReferencesResponse": {
              "type": "object",
              "required": [
-                 "references",
-                 "nextPageToken"
+                 "references"
              ],
              "properties": {
-                 "associations": {
+                 "references": {
                      "type": "array",
                      "items": {
                          "$ref": "#/definitions/Reference"
@@ -1704,13 +1610,6 @@
          },
          "SearchReferenceSetsRequest": {
              "type": "object",
-             "required": [
-                 "md5checksum",
-                 "accession",
-                 "assemblyId",
-                 "pageSize",
-                 "pageToken"
-             ],
              "properties": {
                  "md5checksum": {
                      "type": "string"
@@ -1732,8 +1631,7 @@
          "SearchReferenceSetsResponse": {
              "type": "object",
              "required": [
-                 "referenceSets",
-                 "nextPageToken"
+                 "referenceSets"
              ],
              "properties": {
                  "referenceSets": {
@@ -1750,9 +1648,7 @@
          "SearchVariantSetsRequest": {
              "type": "object",
              "required": [
-                 "datasetId",
-                 "pageSize",
-                 "pageToken"
+                 "datasetId"
              ],
              "properties": {
                  "datasetId": {
@@ -1769,8 +1665,7 @@
          "SearchVariantSetsResponse": {
              "type": "object",
              "required": [
-                 "variantSets",
-                 "nextPageToken"
+                 "variantSets"
              ],
              "properties": {
                  "variantSets": {
@@ -1788,13 +1683,8 @@
              "type": "object",
              "required": [
                  "variantannotationSetId",
-                 "referenceName",
-                 "referenceId",
                  "start",
-                 "end",
-                 "effects",
-                 "pageSize",
-                 "pageToken"
+                 "end"
              ],
              "properties": {
                  "variantannotationSetId": {
@@ -1829,8 +1719,7 @@
          "SearchVariantAnnotationsResponse": {
              "type": "object",
              "required": [
-                 "variantAnnotations",
-                 "nextPageToken"
+                 "variantAnnotations"
              ],
              "properties": {
                  "variantAnnotations": {
@@ -1846,10 +1735,6 @@
          },
          "SearchDatasetsRequest": {
              "type": "object",
-             "required": [
-                 "pageSize",
-                 "pageToken"
-             ],
              "properties": {
                  "pageSize": {
                      "type": "integer"
@@ -1862,8 +1747,7 @@
          "SearchDatasetsResponse": {
              "type": "object",
              "required": [
-                 "datasets",
-                 "nextPageToken"
+                 "datasets"
              ],
              "properties": {
                  "datasets": {
@@ -1880,9 +1764,7 @@
          "SearchPhenotypeAssociationSetsRequest": {
              "type": "object",
              "required": [
-                 "datsetId",
-                 "pageSize",
-                 "pageToken"
+                 "datsetId"
              ],
              "properties": {
                  "datsetId": {
@@ -1899,8 +1781,7 @@
          "SearchPhenotypeAssociationSetsResponse": {
              "type": "object",
              "required": [
-                 "phenotypeAssociationSet",
-                 "nextPageToken"
+                 "phenotypeAssociationSet"
              ],
              "properties": {
                  "phenotypeAssociationSet": {
@@ -1918,7 +1799,6 @@
              "type": "object",
              "required": [
                  "id",
-                 "name",
                  "datasetId",
                  "info"
              ],
@@ -2007,7 +1887,6 @@
              "type": "object",
              "required": [
                  "id",
-                 "name",
                  "datasetId",
                  "referenceSetId",
                  "metadata"
@@ -2037,11 +1916,7 @@
              "type": "object",
              "required": [
                  "id",
-                 "name",
-                 "description",
-                 "crateDateTime",
                  "updateDateTime",
-                 "type",
                  "software",
                  "info"
              ],
@@ -2084,10 +1959,7 @@
          "OntologyTerm": {
              "type": "object",
              "required": [
-                 "id",
-                 "term",
-                 "sourceName",
-                 "sourceVersion"
+                 "id"
              ],
              "properties": {
                  "id": {
@@ -2106,11 +1978,6 @@
          },
          "HGVSAnnotation": {
              "type": "object",
-             "required": [
-                 "genomic",
-                 "transcript",
-                 "protein"
-             ],
              "properties": {
                  "genomic": {
                      "type": "string"
@@ -2126,10 +1993,7 @@
          "AlleleLocation": {
              "type": "object",
              "required": [
-                 "start",
-                 "end",
-                 "referenceSequence",
-                 "alternateSequence"
+                 "start"
              ],
              "properties": {
                  "start": {
@@ -2149,9 +2013,7 @@
          "AnalysisResult": {
              "type": "object",
              "required": [
-                 "analysisId",
-                 "result",
-                 "score"
+                 "analysisId"
              ],
              "properties": {
                  "analysisId": {
@@ -2170,12 +2032,8 @@
              "required": [
                  "id",
                  "featureId",
-                 "alternateBases",
                  "effects",
                  "hgvsAnnotation",
-                 "cDNALocation",
-                 "CDSLocation",
-                 "proteinLocation",
                  "analysisResult"
              ],
              "properties": {
@@ -2222,7 +2080,6 @@
              "required": [
                  "id",
                  "variantSetId",
-                 "name",
                  "analysis"
              ],
              "properties": {
@@ -2247,7 +2104,6 @@
                  "id",
                  "variantId",
                  "variantAnnotationSetId",
-                 "createDateTime",
                  "transcriptEffects",
                  "info"
              ],
